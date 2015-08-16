@@ -1,0 +1,95 @@
+---
+- hosts: all
+  sudo: true
+
+  tasks:
+
+  - name: update cache
+    apt: update_cache=yes
+
+  - name: install tmux
+    apt: pkg=tmux state=installed
+
+  - name: install and configure git
+    apt: pkg=git state=installed
+    #git: clone repo=dotfiles.git dest=~/dotfiles
+
+  - name: install zsh
+    apt: name={{ item }} state=latest update_cache=yes
+    with_items:
+      - git
+      - zsh 
+      - git-core
+
+  - name: Clone oh-my-zsh repo
+    git: "repo=https://github.com/robbyrussell/oh-my-zsh.git dest=~/.oh-my-zsh"
+
+  - name: Set zsh at default shell
+    user: name=vagrant shell=/bin/zsh
+
+  - name: Install apt packages
+    apt: pkg={{ item }} state=latest
+    with_items:
+      - git
+      - vim-python-jedi
+      - tmux
+      - htop
+      - mysql-client
+      - python-pip
+      - python-setuptools
+      - python-pycurl
+      - python-dev
+      - python-numpy
+      - python-scipy
+      - python-pandas
+      - python-nose
+      - python-sympy
+      - libblas-dev
+      - liblapack-dev
+      - gfortran
+
+  - name: upgrade numpy 
+    pip: name=numpy state=latest
+
+  - name: install matplotlib and dependencies
+    sudo: yes
+    apt: pkg={{ item }} state=latest
+    with_items:
+      - python-matplotlib
+      - libfreetype6-dev
+      - libpng12-dev
+
+  - name: install python packages from pip 
+    pip: name={{ item }} state=latest
+    with_items:
+      - pyzmq
+      - tornado
+      - ipython
+      - scikit-learn
+      - statsmodels
+      - pymongo
+      - networkx
+
+  - name: R - add keyserver
+    shell: sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+
+  - name: R - add repo
+    apt_repository: "repo='deb http://cran.rstudio.com/bin/linux/ubuntu trusty/' state=present"
+
+  - name: R - install
+    apt: pkg=r-base-dev state=latest update_cache=yes
+
+  - name: Install R packages
+    shell: echo "install.packages(c('{{ item }}'), repos='http":"//cran.us.r-project.org')" | R --slave --no-restore-history
+    with_items:
+      - ggplot2
+      - plyr
+      - dplyr
+      - lubridate
+      - zoo
+      - forecast
+      - sqldf
+
+
+  #roles: 
+  #  - role: jdauphant.sublimetext
